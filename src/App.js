@@ -1,4 +1,6 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
+import { ADD, MOVE, LOAD } from './actions'
 import Column from "./Column";
 import './App.css';
 
@@ -6,62 +8,26 @@ const DIRECTION_LEFT = -1;
 const DIRECTION_RIGHT = 1;
 
 class App extends Component {
-  constructor(props) {
-    super(props)
-    this.state = {
-      columns: [
-        {
-          name: 'Backlog',
-          cards: [
-            { name: 'Card A'}
-          ]
-        },
-        {
-          name: 'Doing',
-          cards: [
-            { name: 'Card B'}
-          ]
-        },
-        {
-          name: 'Done',
-          cards: [
-            { name: 'Card C'}
-          ]
-        }
-      ]
-    }
-  }
+  componentDidMount = () => this.props.load()
 
   handleAdd = (columnIndex) => {
     const name = window.prompt('Name?')
     if(!name) return
     const card = { name: name}
-    this.setState(prevState => {
-      const { columns } = prevState
-      columns[columnIndex].cards.push(card)
-      return { columns }
-    })
-  }
-
-  handleMove = (columnIndex, cardIndex, direction) => {
-    this.setState(prevState => {
-      const { columns } = prevState
-      const [card] = columns[columnIndex].cards.splice(cardIndex, 1)
-      columns[columnIndex + direction].cards.push(card)
-      return { columns }
-    })
+    this.props.add(columnIndex, card)
   }
 
   render() {
+    if(!this.props.columns) return null
     return (
       <div className="App">
-        {this.state.columns.map((column, columnIndex) => (
+        {this.props.columns.map((column, columnIndex) => (
           <Column 
             column={column} 
             columnIndex={columnIndex} 
             key={columnIndex}
-            onMoveLeft={cardIndex => this.handleMove(columnIndex, cardIndex, DIRECTION_LEFT)}
-            onMoveRight={cardIndex => this.handleMove(columnIndex, cardIndex, DIRECTION_RIGHT)}
+            onMoveLeft={cardIndex => this.props.move(columnIndex, cardIndex, DIRECTION_LEFT)}
+            onMoveRight={cardIndex => this.props.move(columnIndex, cardIndex, DIRECTION_RIGHT)}
             onAddCard={() => this.handleAdd(columnIndex )}
           />
         ))}
@@ -70,4 +36,14 @@ class App extends Component {
   }
 }
 
-export default App;
+const mapStateToProps = ({columns}) => ({
+  columns
+})
+
+const mapDispatchToProps = (dispatch) => ({
+  add: (columnIndex, card) => dispatch({type: ADD, columnIndex, card}),
+  move: (columnIndex, cardIndex, direction) => dispatch({type: MOVE, columnIndex, cardIndex, direction}),
+  load: () => dispatch({type: LOAD})
+
+})
+export default connect(mapStateToProps, mapDispatchToProps) (App);
